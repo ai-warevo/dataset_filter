@@ -1,0 +1,20 @@
+services:
+  dataset-filter:
+    build:
+      context: .
+    container_name: dataset_face_filter
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ${VOLUME_REF_HOST:-./smlq_sfw.png}:${APP_REF_CONTAINER:-/app/reference/smlq_sfw.png}:ro
+      - ${VOLUME_INPUT_HOST:-./smlq_sfw}:${APP_INPUT_CONTAINER:-/app/data/smlq_sfw}
+    command: >
+      --reference ${APP_REF_CONTAINER:-/app/reference/smlq_sfw.png}
+      --input-dir ${APP_INPUT_CONTAINER:-/app/data/smlq_sfw}
+      --tolerance ${APP_TOLERANCE:-0.55}
+      --mode ${APP_MODE:-log}
