@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from dataset_filter.domain.exceptions import ImageProcessingError
 from dataset_filter.domain.models import FilterConfig, MediaFile
-from dataset_filter.domain.services import FaceValidator, DefectStrategy, MatchStrategy
+from dataset_filter.domain.interfaces import Detector, DefectStrategy, MatchStrategy
 
 
 class DatasetPurgeService:
@@ -14,12 +14,12 @@ class DatasetPurgeService:
 
     def __init__(
         self, 
-        validator: FaceValidator, 
+        detectors: list[Detector], 
         config: FilterConfig, 
         defect_strategy: DefectStrategy,
         match_strategy: MatchStrategy | None = None
     ) -> None:
-        self._validator: FaceValidator = validator
+        self._detectors: list[Detector] = detectors
         self._config: FilterConfig = config
         self._defect_strategy: DefectStrategy = defect_strategy
         self._match_strategy: MatchStrategy | None = match_strategy
@@ -45,18 +45,26 @@ class DatasetPurgeService:
 
     def _inspect_item(self, item: MediaFile, stats: dict[str, int]) -> None:
         try:
-            score = self._validator.get_score(item.path)
-            
-            if score <= self._config.tolerance:
-                stats["passed"] += 1
-                if self._match_strategy:
-                    self._match_strategy.handle(item, score)
-                return
+            last_score = None
+            for detector in self._detectors:
+                result = detector.check(item.path)
+                if result.is_defect:
+                    # A defect was found by one of the detectors
+                    self._defect_strategy.handle(item)
+                    stats["defects"] += 1
+                    return
+                
+                if result.score is not None:
+                    last_score = result.score
+
+            # If we reached here, it passed all detectors
+            stats["passed"] += 1
+            if self._match_strategy:
+                self._match_strategy.handle(item, last_score)
+            return
 
         except ImageProcessingError as err:
             tqdm.write(f"💥 Defect detected (System exception: {err}) #{item.path}")
-            score = float('inf') # Force defect handling
-
-        # If we reached here, it's a defect
-        self._defect_strategy.handle(item)
-        stats["defects"] += 1
+            # If we can't even process the image, it's a defect
+            self._defect_strategy.handle(item)
+            stats["defects"] += 1

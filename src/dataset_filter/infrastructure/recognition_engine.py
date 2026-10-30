@@ -8,7 +8,8 @@ from tqdm import tqdm
 
 from dataset_filter.domain.exceptions import ImageProcessingError
 from dataset_filter.domain.models import FilterConfig
-from dataset_filter.domain.services import FaceValidator
+from dataset_filter.domain.interfaces import FaceValidator
+from dataset_filter.domain.models.detection_result import DetectionResult
 
 
 class RecognitionEngine(FaceValidator):
@@ -17,6 +18,15 @@ class RecognitionEngine(FaceValidator):
     def __init__(self, reference_path: Path, config: FilterConfig) -> None:
         self._config: FilterConfig = config
         self._ref_vector: Sequence[float] = self._extract_reference_vector(reference_path)
+
+    def check(self, file_path: Path) -> DetectionResult:
+        """Check if the face in the image is a defect based on tolerance."""
+        try:
+            score = self.get_score(file_path)
+            return DetectionResult(is_defect=score > self._config.tolerance, score=score)
+        except ImageProcessingError as err:
+            # If we can't even process the image, it's a defect (or at least an error)
+            return DetectionResult(is_defect=True)
 
     def get_score(self, file_path: Path) -> float:
         try:

@@ -13,10 +13,10 @@ if SRC_PATH not in sys.path:
 
 from dataset_filter.application.purge_service import DatasetPurgeService  # noqa: E402
 from dataset_filter.application.strategies import (
-    LogDefectStrategy, 
+    LogStrategy, 
     PurgeDefectStrategy, 
     NoOpMatchStrategy, 
-    RenameMatchStrategy
+    RenameStrategy
 )  # noqa: E402
 from dataset_filter.domain.models import FilterConfig  # noqa: E402
 from dataset_filter.infrastructure.recognition_engine import RecognitionEngine  # noqa: E402
@@ -47,10 +47,16 @@ def parse_args() -> argparse.Namespace:
         help="Strictness threshold: lower values mean stricter matching (default: 0.55).",
     )
     parser.add_argument(
-        "--mode",
+        "--defect-mode",
         choices=["log", "purge", "rename"],
         default="log",
-        help="Operation mode: 'log' (dry run), 'purge' (delete defects), or 'rename' (rename matches only). Default: log.",
+        help="Defect handling mode: 'log' (dry run), 'purge' (delete defects), or 'rename' (rename defects). Default: log.",
+    )
+    parser.add_argument(
+        "--match-mode",
+        choices=["noop", "rename", "log"],
+        default="noop",
+        help="Match handling mode: 'noop' (do nothing), 'rename' (rename matches), or 'log' (log matches). Default: noop.",
     )
     return parser.parse_args()
 
@@ -60,22 +66,26 @@ def main() -> None:
     args = parse_args()
     config = FilterConfig(tolerance=args.tolerance)
 
-    # Map mode to strategy pairs
-    if args.mode == "log":
-        defect_strategy = LogDefectStrategy()
-        match_strategy = NoOpMatchStrategy()
-    elif args.mode == "purge":
-        defect_strategy = PurgeDefectStrategy()
-        match_strategy = NoOpMatchStrategy()
-    else:  # mode == "rename"
-        defect_strategy = LogDefectStrategy()
-        match_strategy = RenameMatchStrategy()
+    # Map modes to strategy pairs
+    defect_strategies = {
+        "log": LogStrategy(),
+        "purge": PurgeDefectStrategy(),
+        "rename": RenameStrategy(),
+    }
+    match_strategies = {
+        "noop": NoOpMatchStrategy(),
+        "rename": RenameStrategy(),
+        "log": LogStrategy(),
+    }
+
+    defect_strategy = defect_strategies[args.defect_mode]
+    match_strategy = match_strategies[args.match_mode]
 
     try:
         # Dependency Injection boundary
         engine = RecognitionEngine(reference_path=args.reference, config=config)
         orchestrator = DatasetPurgeService(
-            validator=engine, 
+            detectors=[engine], 
             config=config, 
             defect_strategy=defect_strategy,
             match_strategy=match_strategy

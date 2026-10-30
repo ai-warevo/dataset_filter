@@ -86,19 +86,22 @@ python main.py --reference "path/to/master_face.png" --input-dir "path/to/datase
 | `--reference` | **Yes** | *None* | Absolute or relative path to the master ideal reference profile. |
 | `--input-dir` | **Yes** | *None* | Path to the workspace target directory containing image assets to prune. |
 | `--tolerance` | No | `0.55` | Strictness threshold. Lower values require stricter matching metrics (`0.50`-`0.60` optimal). |
-| `--mode` | No | `log` | Operation mode: `log` (dry run), `purge` (delete defects), or `rename` (rename matches only). |
+| `--defect-mode` | No | `log` | Defect handling mode: `log` (dry run), `purge` (delete defects), or `rename` (rename defects). |
+| `--match-mode` | No | `noop` | Match handling mode: `noop` (do nothing), `rename` (rename matches), or `log` (log matches). |
 
 ---
 
 ## 🔄 Operation Modes
 
-The application behavior is determined by the selected mode. This allows for safe testing before performing destructive operations.
+The application behavior is determined by the selected defect and match modes. This allows for granular control over how both successful matches and detected defects are handled.
 
 | Mode | Defect Strategy | Match Strategy | Effect |
 | :--- | :--- | :--- | :--- |
-| `log` (Default) | `LogDefectStrategy` | `NoOpMatchStrategy` | **Dry Run**: Only logs detected defects to the console. No files are modified. |
-| `purge` | `PurgeDefectStrategy` | `NoOpMatchStrategy` | **Destructive**: Physically deletes images that do not meet the tolerance threshold. |
-| `rename` | `LogDefectStrategy` | `RenameMatchStrategy` | **Transformation**: Logs defects and renames files that successfully match the reference. |
+| **Dry Run** (`--defect-mode log --match-mode noop`) | `LogDefectStrategy` | `NoOpMatchStrategy` | Only logs detected defects and matches to the console. No files are modified. |
+| **Destructive Purge** (`--defect-mode purge --match-mode noop`) | `PurgeDefectStrategy` | `NoOpMatchStrategy` | Physically deletes images that do not meet the tolerance threshold. |
+| **Rename Matches** (`--defect-mode log --match-mode rename`) | `LogDefectStrategy` | `RenameMatchStrategy` | Logs defects and renames files that successfully match the reference. |
+| **Rename Defects** (`--defect-mode rename --match-mode noop`) | `RenameDefectStrategy` | `NoOpMatchStrategy` | Renames defective files (adds `defect_` prefix) and does nothing with matches. |
+| **Full Logging** (`--defect-mode log --match-mode log`) | `LogDefectStrategy` | `LogMatchStrategy` | Logs both defects and successful matches to the console. |
 
 
 ---

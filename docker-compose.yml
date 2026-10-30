@@ -17,4 +17,5 @@ services:
       --reference ${APP_REF_CONTAINER:-/app/reference/smlq_sfw.png}
       --input-dir ${APP_INPUT_CONTAINER:-/app/data/smlq_sfw}
       --tolerance ${APP_TOLERANCE:-0.55}
-      --mode ${APP_MODE:-log}
+      --defect-mode ${APP_DEFECT_MODE:-log}
+      --match-mode ${APP_MATCH_MODE:-noop}
