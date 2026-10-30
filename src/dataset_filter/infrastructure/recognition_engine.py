@@ -10,6 +10,7 @@ from dataset_filter.domain.exceptions import ImageProcessingError
 from dataset_filter.domain.models import FilterConfig
 from dataset_filter.domain.interfaces import FaceValidator
 from dataset_filter.domain.models.detection_result import DetectionResult
+from dataset_filter.domain.models.embedding import FaceEmbedding
 
 
 class RecognitionEngine(FaceValidator):
@@ -54,6 +55,17 @@ class RecognitionEngine(FaceValidator):
 
         except Exception as err:  # noqa: BLE001
             raise ImageProcessingError(f"Corrupted or unsafe file structure: {err}") from err
+
+    def get_embedding(self, file_path: Path) -> FaceEmbedding | None:
+        """Extract the first face embedding found in the image."""
+        try:
+            current_image = face_recognition.load_image_file(file_path)
+            encodings = face_recognition.face_encodings(current_image)
+            if not encodings:
+                return None
+            return FaceEmbedding(vector=list(encodings[0]))
+        except Exception as err:  # noqa: BLE001
+            raise ImageProcessingError(f"Failed to extract embedding from {file_path}: {err}") from err
 
     def _extract_reference_vector(self, path: Path) -> Sequence[float]:
         if not path.is_file():

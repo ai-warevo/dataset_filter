@@ -11,7 +11,10 @@ SRC_PATH = str(Path(__file__).resolve().parent / "src")
 if SRC_PATH not in sys.path:
     sys.path.insert(0, SRC_PATH)
 
-from dataset_filter.application.purge_service import DatasetPurgeService  # noqa: E402
+from dataset_filter.application.pipeline_orchestrator import PipelineOrchestrator
+from dataset_filter.application.stages.quality_stage import QualityStage
+from dataset_filter.application.stages.deduplication_stage import DeduplicationStage
+from dataset_filter.application.stages.match_stage import MatchStage
 from dataset_filter.application.strategies import (
     LogStrategy, 
     PurgeDefectStrategy, 
@@ -20,10 +23,12 @@ from dataset_filter.application.strategies import (
 )  # noqa: E402
 from dataset_filter.domain.models import FilterConfig, EvaluationMode  # noqa: E402
 from dataset_filter.domain.models.filter_config import MatchConfig, QualityConfig # noqa: E402
+from dataset_filter.domain.interfaces import FaceValidator
 from dataset_filter.infrastructure.recognition_engine import RecognitionEngine  # noqa: E402
 from dataset_filter.infrastructure.detectors.face_count_detector import FaceCountDetector
 from dataset_filter.infrastructure.detectors.blur_detector import BlurDetector
 from dataset_filter.infrastructure.detectors.scale_detector import ScaleDetector
+from dataset_filter.infrastructure.embedding_repository import InMemoryEmbeddingRepository # noqa: E402
 
 # Try to load .env if it exists (using simple manual parsing to avoid new dependency)
 def load_dotenv() -> None:
@@ -49,7 +54,8 @@ def build_config_from_env() -> FilterConfig:
     # Match Config (Identity)
     match_tolerance = float(os.getenv("DETECTOR_MATCH_TOLERANCE", "0.55"))
     match_weight = float(os.getenv("DETECTOR_MATCH_WEIGHT", "1.0"))
-    match_cfg = MatchConfig(tolerance=match_tolerance, weight=match_weight)
+    dedup_threshold = float(os.getenv("DEDUPLICATION_THRESHOLD", "0.4"))
+    match_cfg = MatchConfig(tolerance=match_tolerance, weight=match_weight, deduplication_threshold=dedup_threshold)
 
     # Quality Config (Blur, Count, Scale)
     blur_thresh = float(os.getenv("DETECTOR_BLUR_THRESHOLD", "120.0"))
@@ -75,6 +81,7 @@ def build_config_from_env() -> FilterConfig:
         match=match_cfg,
         quality=quality_cfg
     )
+
 
 def parse_args() -> argparse.Namespace:
     """Handle CLI argument mapping."""
@@ -132,6 +139,7 @@ def main() -> None:
     try:
         # Dependency Injection boundary
         engine = RecognitionEngine(reference_path=args.reference, config=config)
+        embedding_repo = InMemoryEmbeddingRepository()
         
         # Initialize all detectors with the shared config
         detectors = [
@@ -141,14 +149,18 @@ def main() -> None:
             ScaleDetector(config)
         ]
 
-        orchestrator = DatasetPurgeService(
-            detectors=detectors, 
-            config=config, 
-            defect_strategy=defect_strategy,
-            match_strategy=match_strategy
-        )
+        # Find the face validator among detectors to pass it to DeduplicationStage
+        face_validator = next((d for d in detectors if isinstance(d, FaceValidator)), None)
+        if not face_validator:
+             raise ValueError("FaceValidator must be provided in detectors for deduplication.")
+
+        orchestrator = PipelineOrchestrator(stages=[
+            QualityStage(detectors=detectors, config=config, defect_strategy=defect_strategy),
+            DeduplicationStage(face_validator=face_validator, embedding_repository=embedding_repo, config=config, defect_strategy=defect_strategy),
+            MatchStage(match_strategy=match_strategy)
+        ])
         
-        orchestrator.process_directory(args.input_dir)
+        orchestrator.process_directory(args.input_dir, config.valid_extensions)
     except Exception as err:  # noqa: BLE001
         tqdm.write(f"❌ Critical system initialization failure: {err}")
 

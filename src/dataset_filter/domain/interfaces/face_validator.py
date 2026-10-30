@@ -1,9 +1,11 @@
+from __future__ import annotations
 """Abstract interface defining the contract for facial authentication engines."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
 from dataset_filter.domain.interfaces.detector import Detector
 from dataset_filter.domain.models.detection_result import DetectionResult
+from dataset_filter.domain.models.embedding import FaceEmbedding
 
 
 class FaceValidator(Detector):
@@ -12,6 +14,10 @@ class FaceValidator(Detector):
         """Determine the similarity score (distance) of the target image. 
         Lower is better/closer match. Returns float('inf') if no face found.
         """
+
+    @abstractmethod
+    def get_embedding(self, file_path: Path) -> FaceEmbedding | None:
+        """Extract facial embedding from the given image."""
 
     def check(self, file_path: Path) -> DetectionResult:
         """Default implementation of detector check using get_score."""

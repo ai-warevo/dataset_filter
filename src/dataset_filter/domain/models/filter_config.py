@@ -14,6 +14,7 @@ class EvaluationMode(Enum):
 class MatchConfig:
     tolerance: float = 0.55
     weight: float = 1.0
+    deduplication_threshold: float = 0.4  # Euclidean distance threshold for duplicates
 
 
 @dataclass(frozen=True)
