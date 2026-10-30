@@ -5,5 +5,5 @@ from dataset_filter.domain.interfaces import DefectStrategy
 
 
 class PurgeDefectStrategy(DefectStrategy):
-    def handle(self, item: MediaFile) -> None:
+    def handle(self, item: MediaFile, reason: str = "") -> None:
         item.purge()

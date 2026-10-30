@@ -22,11 +22,23 @@ class RecognitionEngine(FaceValidator):
     def check(self, file_path: Path) -> DetectionResult:
         """Check if the face in the image is a defect based on tolerance."""
         try:
-            score = self.get_score(file_path)
-            return DetectionResult(is_defect=score > self._config.tolerance, score=score)
+            distance = self.get_score(file_path)
+            # If distance is inf (no faces), it's a defect.
+            if distance == float('inf'):
+                return DetectionResult(is_defect=True, confidence=0.0, reason="No face detected")
+
+            # Confidence: 1.0 when distance is 0, decreasing as distance increases.
+            confidence = max(0.0, 1.0 - distance)
+            is_defect = distance > self._config.match.tolerance
+            
+            return DetectionResult(
+                is_defect=is_defect, 
+                confidence=confidence, 
+                reason="" if not is_defect else f"Identity mismatch (dist: {distance:.2f})"
+            )
         except ImageProcessingError as err:
-            # If we can't even process the image, it's a defect (or at least an error)
-            return DetectionResult(is_defect=True)
+            # If we can't even process the image, it's a defect.
+            return DetectionResult(is_defect=True, confidence=0.0, reason=str(err))
 
     def get_score(self, file_path: Path) -> float:
         try:

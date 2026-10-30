@@ -3,13 +3,13 @@ FROM animcogn/face_recognition:gpu
 
 WORKDIR /app
 
-# Upgrade pip and install tqdm
 RUN /opt/venv/bin/python3 -m pip install --no-cache-dir --upgrade pip
-RUN pip3 install --no-cache-dir tqdm
 
-# Copy application layers
+COPY pyproject.toml README.md .
+
+RUN pip3 install --no-cache-dir .
+
 COPY main.py .
-COPY pyproject.toml .
 COPY README.md .
 COPY src/ ./src/
 

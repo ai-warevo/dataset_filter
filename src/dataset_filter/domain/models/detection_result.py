@@ -8,4 +8,6 @@ from dataclasses import dataclass
 class DetectionResult:
     """Result of a single detector check."""
     is_defect: bool
+    confidence: float = 1.0
+    reason: str = ""
     score: float | None = None
