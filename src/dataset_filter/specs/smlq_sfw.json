@@ -1,0 +1,29 @@
+{
+  "character_id": "smlq_sfw",
+  "piercing_requirements": [
+    {
+      "artifact_id": "silver_hoop",
+      "expected_location": "RIGHT_EYEBROW",
+      "is_mandatory": true,
+      "expected_count": 2
+    },
+    {
+      "artifact_id": "silver_hoop",
+      "expected_location": "LEFT_EYEBROW",
+      "is_mandatory": false,
+      "expected_count": 0
+    },
+    {
+      "artifact_id": "silver_hoop",
+      "expected_location": "LEFT_NOSTRIL",
+      "is_mandatory": true,
+      "expected_count": 1
+    },
+    {
+      "artifact_id": "silver_hoop",
+      "expected_location": "RIGHT_NOSTRIL",
+      "is_mandatory": false,
+      "expected_count": 0
+    }
+  ]
+}

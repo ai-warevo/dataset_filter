@@ -76,7 +76,7 @@ uv sync
 When executing locally without docker wrappers, configure the runtime flags dynamically via the primary entrypoint boundary:
 
 ```bash
-python main.py --reference "path/to/master_face.png" --input-dir "path/to/dataset" --tolerance 0.55
+python main.py --reference "path/to/smlq_sfw.png" --input-dir "path/to/dataset" --tolerance 0.55
 ```
 
 ### Argument Parameters
@@ -103,6 +103,24 @@ The application behavior is determined by the selected defect and match modes. T
 | **Rename Defects** (`--defect-mode rename --match-mode noop`) | `RenameDefectStrategy` | `NoOpMatchStrategy` | Renames defective files (adds `defect_` prefix) and does nothing with matches. |
 | **Full Logging** (`--defect-mode log --match-mode log`) | `LogDefectStrategy` | `LogMatchStrategy` | Logs both defects and successful matches to the console. |
 
+
+---
+
+## 🛠️ Additional Tools
+
+### YOLO Synthetic Data Generator (`yolo-gen`)
+
+```sh
+docker compose -f docker-compose.dev.yml up --build yolo-gen
+docker compose -f docker-compose.dev.yml up yolo-gen
+docker exec -it yolo_generator sh
+python3 src/yolo/testyolo.py
+python src/debug_rois.py
+python src/find_params.py
+```
+
+A specialized tool for generating synthetic training data by injecting assets onto clean faces using facial landmarks.
+[See detailed documentation in src/yolo/README.md](./src/yolo/README.md)
 
 ---
 

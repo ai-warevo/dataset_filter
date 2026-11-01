@@ -28,9 +28,22 @@ class QualityConfig:
 
 
 @dataclass(frozen=True)
+class HeuristicConfig:
+    contrast_multiplier: float = 1.12
+    brightness_std_multiplier: float = 1.5
+    min_brightness_floor: float = 80.0
+    kernel_size: int = 3
+    min_contour_area: float = 1.0
+    clean_side_contrast_threshold: float = 140.0
+    nostril_diff_threshold: float = 20.0
+    nostril_min_brightness: float = 150.0
+
+
+@dataclass(frozen=True)
 class FilterConfig:
     evaluation_mode: EvaluationMode = EvaluationMode.STRICT
     global_threshold: float = 0.65
     valid_extensions: tuple[str, ...] = (".png", ".jpg", ".jpeg")
     match: MatchConfig = field(default_factory=MatchConfig)
     quality: QualityConfig = field(default_factory=QualityConfig)
+    heuristic: HeuristicConfig = field(default_factory=HeuristicConfig)

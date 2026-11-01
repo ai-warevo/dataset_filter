@@ -9,6 +9,8 @@ dependencies = [
     "face_recognition_models",
     "tqdm",
     "opencv-python-headless",
+    "ultralytics",
+    "clip @ git+https://github.com/ultralytics/CLIP.git",
 ]
 
 [build-system]
@@ -17,3 +19,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dataset_filter"]
+
+[tool.hatch.metadata]
+allow-direct-references = true

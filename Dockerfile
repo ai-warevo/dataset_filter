@@ -3,14 +3,24 @@ FROM animcogn/face_recognition:gpu
 
 WORKDIR /app
 
-RUN /opt/venv/bin/python3 -m pip install --no-cache-dir --upgrade pip
+ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Moscow
+
+# Remove broken NVIDIA repositories to avoid GPG errors during build
+RUN rm -f /etc/apt/sources.list.d/cuda*.list && \
+    rm -f /etc/apt/sources.list.d/nvidia*.list && \
+    apt-get update && apt-get install -y \
+    libgl1 \
+    git \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml README.md .
-
-RUN pip3 install --no-cache-dir .
-
 COPY main.py .
-COPY README.md .
 COPY src/ ./src/
 
-ENTRYPOINT ["python3", "main.py"]
+RUN /opt/venv/bin/python3 -m pip install --no-cache-dir --upgrade pip && \
+    /opt/venv/bin/python3 -m pip install --no-cache-dir .
+
+ENTRYPOINT ["/opt/venv/bin/python3"]

@@ -13,10 +13,43 @@ services:
               count: all
               capabilities: [gpu]
     volumes:
-      - ${VOLUME_REF_HOST}:${APP_REF_CONTAINER}:ro
-      - ${VOLUME_INPUT_HOST}:${APP_INPUT_CONTAINER}
+      - ./data/reference:/app/data/reference
+      - ./data/weights:/app/weights
+      - /c/Users/axel/AppData/Local/Comfy-Desktop/ComfyUI-Shared/output/smlq_sfw:/app/data/smlq_sfw
     command: >
-      --reference ${APP_REF_CONTAINER}
-      --input-dir ${APP_INPUT_CONTAINER}
+      main.py --reference /app/data/reference/smlq_sfw.png
+      --input-dir /app/smlq_sfw
       --defect-mode ${APP_DEFECT_MODE}
       --match-mode ${APP_MATCH_MODE}
+
+  yolo-gen:
+    profiles:
+      - manual
+    build:
+      context: .
+    container_name: yolo_generator
+    env_file:
+      - .env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./src:/app/src
+      - /c/Users/axel/AppData/Local/Comfy-Desktop/ComfyUI-Shared/output/smlq_sfw:/app/data/smlq_sfw
+      - ./data/assets:/app/data/assets
+      - ./data/clean_faces:/app/data/clean_faces
+      - ./data/debug/:/app/data/debug/
+      - ./data/reference:/app/data/reference
+      - ./data/synthetic_output:/app/data/synthetic_output
+      - ./data/weights:/app/weights
+    # entrypoint: ["sh"]
+    command: >
+      src/yolo/generator.py 
+      --faces /app/data/clean_faces 
+      --assets /app/data/assets 
+      --output /app/data/synthetic_output 
+      --iterations 20
