@@ -122,6 +122,16 @@ python src/find_params.py
 A specialized tool for generating synthetic training data by injecting assets onto clean faces using facial landmarks.
 [See detailed documentation in src/yolo/README.md](./src/yolo/README.md)
 
+### ComfyUI Piercing Dataset Workflow
+
+```sh
+python comfyui_workflow_piercing_dataset.py --generate
+python comfyui_workflow_piercing_dataset.py --validate
+```
+
+A comprehensive workflow for generating and validating piercing datasets using ComfyUI for Stable Diffusion image generation.
+[See detailed documentation in comfyui_workflow_piercing_dataset.py](./comfyui_workflow_piercing_dataset.py)
+
 ---
 
 ## 💎 Linting & Clean Code Standards
