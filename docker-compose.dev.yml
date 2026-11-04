@@ -19,10 +19,11 @@ services:
       - ./data/debug/:/app/data/debug/
       - ./data/reference:/app/data/reference
       - ./data/weights:/app/weights
-      - /c/Users/axel/AppData/Local/Comfy-Desktop/ComfyUI-Shared/output/smlq_sfw:/app/data/smlq_sfw
+      - /c/Users/axel/AppData/Local/Comfy-Desktop/ComfyUI-Shared/output/smlq_sfwDataset30:/app/data/input
+      - /c/Users/axel/AppData/Local/Comfy-Desktop/ComfyUI-Shared/output/smlq_sfw1/smlq_sfw_00005.png:/app/data/reference_image.png
     command: >
-      main.py --reference /app/data/reference/smlq_sfw.png
-      --input-dir /app/data/smlq_sfw
+      main.py --reference ${REFERENCE_IMAGE}
+      --input-dir ${INPUT_DIR}
       --defect-mode ${APP_DEFECT_MODE}
       --match-mode ${APP_MATCH_MODE}
 

@@ -97,11 +97,22 @@ def build_config_from_env() -> FilterConfig:
 def parse_args() -> argparse.Namespace:
     """Handle CLI argument mapping."""
     parser = argparse.ArgumentParser(description="DDD-compliant dataset filter using src/ layout.")
-    parser.add_argument("-r", "--reference", type=Path, required=True, help="Path to the master reference image.")
-    parser.add_argument("-i", "--input-dir", type=Path, required=True, help="Path to the directory containing images to filter.")
+    
+    # Use env vars as defaults if not provided via CLI
+    ref_default = os.getenv("REFERENCE_IMAGE")
+    input_default = os.getenv("INPUT_DIR")
+
+    parser.add_argument("-r", "--reference", type=Path, default=Path(ref_default) if ref_default else None, required=False, help="Path to the master reference image.")
+    parser.add_argument("-i", "--input-dir", type=Path, default=Path(input_default) if input_default else None, required=False, help="Path to the directory containing images to filter.")
     parser.add_argument("--defect-mode", choices=["log", "purge", "rename"], default="log", help="Defect handling mode.")
     parser.add_argument("--match-mode", choices=["noop", "rename", "log"], default="noop", help="Match handling mode.")
-    return parser.parse_args()
+    
+    args = parser.parse_args()
+
+    if not args.reference or not args.input_dir:
+        parser.error("Both --reference and --input-dir must be provided (via CLI or environment variables).")
+        
+    return args
 
 class Bootstrap:
     """Orchestrates the application startup, configuration, and dependency injection."""

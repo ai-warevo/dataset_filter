@@ -42,6 +42,7 @@ Place your master image and dataset folder in the root directory matching your `
 
 ```bash
 docker compose up --build
+docker compose -f docker-compose.dev.yml up dataset-filter
 ```
 *Note: Since volumes use active bind mounts, any files purged inside the container will instantly vanish from your local host machine folder.*
 

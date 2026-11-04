@@ -67,6 +67,10 @@ class RecognitionEngine(FaceValidator):
         except Exception as err:  # noqa: BLE001
             raise ImageProcessingError(f"Failed to extract embedding from {file_path}: {err}") from err
 
+    def get_weight(self) -> float:
+        """Return the weight of this detector as defined in the configuration."""
+        return self._config.match.weight
+
     def _extract_reference_vector(self, path: Path) -> Sequence[float]:
         if not path.is_file():
             raise FileNotFoundError(f"Reference master asset '{path}' is missing.")

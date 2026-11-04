@@ -38,3 +38,7 @@ class ScaleDetector(Detector):
             return DetectionResult(is_defect=is_defect, confidence=confidence, reason=reason)
         except Exception as e:
             return DetectionResult(is_defect=True, confidence=0.0, reason=f"Scale detection error: {str(e)}")
+
+    def get_weight(self) -> float:
+        """Return the weight of this detector as defined in the configuration."""
+        return self._config.quality.scale_weight
